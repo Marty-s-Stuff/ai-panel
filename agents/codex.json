@@ -1,0 +1,25 @@
+{
+  "id": "codex",
+  "name": "Codex",
+  "program": "OpenAI Codex CLI",
+  "icon": "🌀",
+  "description": "OpenAI Codex CLI: chat with Codex inside {appName}. Sign in with your ChatGPT account (the CLI needs a paid plan such as Plus) or use an OpenAI API key (billed per use).",
+  "find": { "commands": ["codex"], "paths": ["~/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe"] },
+  "install": { "command": "powershell -ExecutionPolicy ByPass -c \"irm https://chatgpt.com/codex/install.ps1 | iex\"", "shell": "PowerShell", "url": "https://developers.openai.com/codex/cli" },
+  "chat": { "args": ["-c", "developer_instructions={panelNote}"] },
+  "version": { "args": ["--version"] },
+  "status": {
+    "args": ["login", "status"],
+    "match": {
+      "loggedIn": "^(?!.*not logged in).*logged in",
+      "methods": { "chatgpt": "ChatGPT sign-in", "api key": "OpenAI API key" }
+    }
+  },
+  "signIn": [
+    { "id": "chatgpt", "label": "Sign in with ChatGPT…", "tip": "Opens the ChatGPT sign-in page in your browser. The app never sees your password.", "args": ["login"], "intro": "Signing in with your ChatGPT account. Your browser opens; finish there." },
+    { "id": "device", "label": "Sign in with ChatGPT (device code)…", "tip": "Shows a code to type on a ChatGPT page, for when the browser can't open here. Device-code sign-in must be switched on in your ChatGPT security settings first.", "args": ["login", "--device-auth"], "intro": "Follow the steps shown here to sign in with a device code." },
+    { "id": "screen", "label": "Codex's own sign-in screen (has the API key choice)…", "tip": "Starts Codex, which asks how to sign in. To use an OpenAI API key, pick its API key choice and paste the key into Codex's own prompt; the app never handles the key.", "args": [], "intro": "Codex asks how you want to sign in. Choose with the keys shown." }
+  ],
+  "signOut": { "args": ["logout"], "confirm": "Sign Codex out on this computer? (It signs out the codex command everywhere, not only here.)" },
+  "panelNote": "You are running inside the built-in AI panel of {appName}. The user answers your questions with buttons made from your text. Whenever you offer the user choices, put them at the very end of your message as a numbered list, one per line (1. ..., 2. ..., 3. ...), and always finish the list with one more numbered option: Something else - type what you want."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "antigravity",
+  "name": "Antigravity",
+  "program": "Google Antigravity CLI",
+  "icon": "🪐",
+  "description": "Google Antigravity CLI (agy, replaced Gemini CLI for free users): chat with Gemini inside {appName}. Free Individual plan with weekly limits. It asks you to sign in with Google the first time it starts; sign out with /logout inside the chat.",
+  "find": { "commands": ["agy"], "paths": ["~/AppData/Local/agy/bin/agy.exe"] },
+  "install": { "command": "irm https://antigravity.google/cli/install.ps1 | iex", "shell": "PowerShell", "url": "https://antigravity.google/docs/getting-started" },
+  "chat": { "args": [] },
+  "version": { "args": ["--version"] }
+}

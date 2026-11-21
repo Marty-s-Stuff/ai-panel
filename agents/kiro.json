@@ -1,0 +1,23 @@
+{
+  "id": "kiro",
+  "name": "Kiro",
+  "program": "Kiro CLI",
+  "icon": "👻",
+  "description": "Kiro CLI (Amazon, was Amazon Q Developer CLI): chat with Kiro inside {appName}. Has a small free tier: sign in with an AWS Builder ID, Google or GitHub.",
+  "find": { "commands": ["kiro-cli"], "paths": ["~/AppData/Local/Kiro-Cli/kiro-cli.exe"] },
+  "install": { "command": "irm 'https://cli.kiro.dev/install.ps1' | iex", "shell": "PowerShell", "url": "https://kiro.dev/docs/getting-started/installation/" },
+  "chat": { "args": ["chat"] },
+  "version": { "args": ["--version"] },
+  "status": {
+    "args": ["whoami"],
+    "match": {
+      "loggedIn": "^logged in",
+      "methods": { "builder id": "AWS Builder ID", "identity center": "IAM Identity Center (Pro)", "google": "Google", "github": "GitHub" }
+    }
+  },
+  "signIn": [
+    { "id": "login", "label": "Sign in (free with Builder ID, Google or GitHub)…", "tip": "Kiro asks how to sign in (pick a free option or a Pro licence), then opens your browser. The app never sees your password.", "args": ["login"], "intro": "Pick how to sign in with the buttons below, then finish in your browser." },
+    { "id": "device", "label": "Sign in with a device code…", "tip": "Shows a code to type on a web page, for when the browser can't open here.", "args": ["login", "--use-device-flow"], "intro": "Follow the steps shown here to sign in with a device code." }
+  ],
+  "signOut": { "args": ["logout"], "confirm": "Sign Kiro CLI out on this computer? (It signs out the kiro-cli command everywhere, not only here.)" }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "github-copilot",
+  "name": "Copilot",
+  "program": "GitHub Copilot CLI",
+  "icon": "🐙",
+  "description": "GitHub Copilot CLI: chat with Copilot inside {appName}. Works with every Copilot plan, Copilot Free included. Sign in with your GitHub account. Sign out by typing /logout inside the chat.",
+  "find": { "commands": ["copilot"], "paths": ["~/AppData/Local/GitHubCopilotCLI/copilot.exe"] },
+  "install": { "command": "winget install GitHub.Copilot", "shell": "PowerShell", "url": "https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli" },
+  "chat": { "args": [] },
+  "version": { "args": ["--version"] },
+  "dropEnv": ["^COPILOT_GITHUB_TOKEN$", "^GH_TOKEN$", "^GITHUB_TOKEN$"],
+  "signIn": [
+    { "id": "github", "label": "Sign in with GitHub (browser)…", "tip": "Opens GitHub in your browser to approve the sign-in. The app never sees your password.", "args": ["login", "--web-flow"], "intro": "Signing in with your GitHub account. Your browser opens; finish there." },
+    { "id": "device", "label": "Sign in with GitHub (device code)…", "tip": "Shows a one-time code and a GitHub page to type it on, for when the browser can't open here.", "args": ["login", "--device-code"], "intro": "Copy the code shown here, then finish on the GitHub page." }
+  ]
+}

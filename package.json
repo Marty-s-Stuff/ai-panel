@@ -1,0 +1,12 @@
+{
+  "name": "ai-panel",
+  "version": "1.0.0",
+  "description": "One shared AI panel for Marty's apps: sign in to Claude, Codex, Copilot and other command-line AI assistants, and let them work inside the app.",
+  "main": "node/aipanel.js",
+  "files": ["ai-panel.html", "ai-panel.css", "ai-panel.js", "bridge-http.js", "node/", "python/", "agents/", "xterm/", "README.md", "ADOPTING.md", "CHANGELOG.md"],
+  "scripts": { "test": "node test/check.mjs" },
+  "repository": { "type": "git", "url": "https://github.com/Marty-s-Stuff/ai-panel.git" },
+  "peerDependencies": { "node-pty": ">=1.0.0" },
+  "peerDependenciesMeta": { "node-pty": { "optional": true } },
+  "private": true
+}
