@@ -1,6 +1,6 @@
 # AI Panel
 
-One AI panel for all of Marty's apps (Simple GLB Editor, Hollow Editor, Claudio Editor, Simple A/V Editor): sign in to a command-line AI assistant (Claude Code, OpenAI Codex, Google Antigravity, GitHub Copilot, Kiro, or your own plugin) and chat with it in a terminal inside the app, so it can work on your files and, through the app's MCP server, control the app.
+One AI panel for all of Marty's apps (Simple GLB Editor, Hollow Editor, Simple A/V Editor): sign in to a command-line AI assistant (Claude Code, OpenAI Codex, Google Antigravity, GitHub Copilot, Kiro, or your own plugin) and chat with it in a terminal inside the app, so it can work on your files and, through the app's MCP server, control the app.
 
 Written once here, so a fix or a new assistant reaches every app. **Each app names the version it uses and picks it up when the app is rebuilt** (never live while it runs). How to add it to an app: [ADOPTING.md](ADOPTING.md).
 

@@ -4,7 +4,7 @@ Each app names **one version tag** and gets it **when the app is rebuilt**, from
 
 Each app has its own Claude session; that session does the switch, one app at a time. **Keep everything the app's panel does today** (check the list at the end).
 
-## Electron apps (Simple GLB Editor, Claudio Editor, Simple A/V Editor)
+## Electron apps (Simple GLB Editor, Simple A/V Editor)
 
 1. **Dependency.** In `package.json` → `dependencies`: `"ai-panel": "github:Marty-s-Stuff/ai-panel#v1.0.0"`, then `npm install`. The app's own `node-pty` and `@xterm/*` stay as they are (the panel uses the app's `node-pty`).
 2. **Front-end files.** The page can't load from `node_modules` in the packaged app, so copy them where the page's other files are. In the GLB editor, `scripts/vendor.js` (run by `npm run dist`) is the place: copy `node_modules/ai-panel/{ai-panel.html, ai-panel.css, ai-panel.js, xterm/}` to `vendor/ai-panel/`. An app without xterm yet uses the panel's `xterm/` folder.
