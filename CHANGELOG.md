@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.4 — 2026-11-21
+
+- Fixed: the answer bar made buttons out of an earlier message and its answer ("❯ /model sonnet" / "⎿ Set model to Sonnet…"). A menu without numbers now only counts when the assistant's message box isn't showing below it: such menus take the box's place. Two more screens in `choiceCases()`.
+
 ## v1.2.3 — 2026-11-21
 
 - Fixed: the answer bar made buttons out of Claude Code's own message box when you scrolled its history (↑) and the text wrapped onto a second line ("clouds and fog should be off…" / "by options"). Menus without numbers are now only read when there's no ──── border line right above or below them, including a border with words in it ("── History 11/11 ──").

@@ -49,6 +49,8 @@
       ['message box with History open, wrapped text (Claude Code)', `Answer.\r\n\r\n── History 11/11 ${'─'.repeat(50)}\r\n❯ clouds and fog should be off in the editor by default and enabled\r\n  by options\r\n${W}\r\n  ⏵⏵ auto mode on`, ''],
       ['message box', `Answer.\r\n\r\n${W}\r\n❯ hello there\r\n${W}\r\n  ? for shortcuts`, ''],
       ['message box, wrapped text', `Answer.\r\n\r\n${W}\r\n❯ a long message that wraps onto the next line\r\n  and keeps going here\r\n${W}`, ''],
+      ['an earlier message and its answer (Claude Code /model)', `\r\n❯ /model sonnet\r\n  ⎿  Set model to Sonnet 5.5 and saved as your default for new sessions\r\n\r\n\r\n\r\n${W}\r\n❯ \r\n${W}\r\n  ⏵⏵ auto mode on (shift+tab to cycle)`, ''],
+      ['an earlier message, message box out of view', `\r\n❯ /model sonnet\r\n  ⎿  Set model to Sonnet 5.5\r\n\r\n${W}`, ''],
       ['trust question without numbers (Claude Code)', ` Security guide\r\n\r\n ❯ No, exit\r\n   Yes, I trust this folder\r\n\r\n Enter to confirm`, 'No, exit / Yes, I trust this folder'],
       ['Yes / No with the question at the same column (Kiro)', `┃\r\n  You are not logged in. Login now? \r\n> Yes\r\n  No`, 'Yes / No'],
       ['numbered menu', `Allow it?\r\n❯ 1. Yes\r\n  2. No`, 'Yes / No'],
