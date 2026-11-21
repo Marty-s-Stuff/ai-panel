@@ -2,8 +2,8 @@
    with their defaults: --ai (the panel's highlight colour, var(--accent)), --ok ("Your turn", var(--accent)),
    --on-primary (text on primary buttons, #fff), --ai-round (corner roundness: 1 = as drawn, 0 = square), --ai-font (the
    font stack). Black see-through shadows are the only fixed colour. An app may also override any rule below in its own CSS. */
-#claudeDropdown button, #term button, #term select { font: 13px/1.3 var(--ai-font, system-ui, "Segoe UI", Roboto, sans-serif); color: var(--text); background: var(--ctl); border: 1px solid var(--ctl-border); border-radius: calc(5px * var(--ai-round, 1)); padding: 4px 9px; height: 28px; cursor: pointer; white-space: nowrap; }
-#claudeDropdown button:hover, #term button:hover { background: var(--ctl-hover); }
+#claudeDropdown .splitbtn button, #term button, #term select { font: 13px/1.3 var(--ai-font, system-ui, "Segoe UI", Roboto, sans-serif); color: var(--text); background: var(--ctl); border: 1px solid var(--ctl-border); border-radius: calc(5px * var(--ai-round, 1)); padding: 4px 9px; height: 28px; cursor: pointer; white-space: nowrap; }
+#claudeDropdown .splitbtn button:hover, #term button:hover { background: var(--ctl-hover); } /* (the ▾ menu's items keep the app's own .menu look) */
 #term button.primary { background: var(--primary); border-color: var(--primary-border); color: var(--on-primary, #fff); }
 #term button.primary:hover { background: var(--primary-hover); }
 #term { font: 13px/1.3 var(--ai-font, system-ui, "Segoe UI", Roboto, sans-serif); color: var(--text); }
@@ -20,7 +20,7 @@
 #btnClaudeMenu.has-update::after { content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 #claudeMenu .ai-update { padding: 6px 8px; margin: 2px 0; border-radius: calc(6px * var(--ai-round, 1)); background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 12px; max-width: 320px; }
 #claudeMenu .ai-update-btns { display: flex; gap: 6px; margin: 6px 0 4px; }
-#claudeMenu .ai-update-btns button { width: auto; height: 26px; padding: 0 10px; border: 1px solid var(--ctl-border); border-radius: calc(5px * var(--ai-round, 1)); background: var(--ctl); text-align: center; }
+#claudeMenu .ai-update-btns button { width: auto; height: 26px; padding: 0 10px; border: 1px solid var(--ctl-border); border-radius: calc(5px * var(--ai-round, 1)); background: var(--ctl); color: var(--text); font: 12px var(--ai-font, system-ui, "Segoe UI", sans-serif); text-align: center; cursor: pointer; }
 #claudeMenu .ai-update-btns button.primary { background: var(--primary); border-color: var(--primary-border); color: var(--on-primary, #fff); }
 #claudeMenu .ai-update a { color: var(--accent); }
 #claudeMenu .menu-list { display: flex; flex-direction: column; margin: 2px 0 2px 14px; padding-left: 6px; border-left: 2px solid color-mix(in srgb, var(--ai, var(--accent)) 50%, transparent); }

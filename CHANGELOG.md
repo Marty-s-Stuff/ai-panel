@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.1 — 2026-11-21
+
+Fixes found by the Simple GLB Editor's session:
+- The ▾ menu's items look like the app's own menu again (flat rows). The panel's button style now only covers its own buttons (`#claudeDropdown .splitbtn button`), not every item in the menu.
+- Light themes: text an assistant prints in "white" (Claude Code's bold title, for example) was white on white. In light themes `white` / `brightWhite` / `black` now use the app's `--muted` / `--text` tokens.
+- ADOPTING.md: load the panel in a non-blocking `(async () => { … })()` block, not with a top-level `await`.
+
 ## v1.2.0 — 2026-11-21
 
 - **Panel updates without a rebuild.** At start the app asks GitHub for a newer 1.x; the ▾ menu shows a dot and offers **Install / Not now / Skip this version** (with a "What's new" link). An installed version is used from the app's next start; **↩ Use the built-in AI panel** goes back. The menu always ends with the running version ("AI panel v1.2.0 (built in)").

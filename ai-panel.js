@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.2.0';
+export const AI_PANEL_VERSION = '1.2.1';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -65,7 +65,10 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   /** The terminal's colours, read from the app's theme tokens. */
   const theme = () => {
     const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim() || undefined;
-    return { background: v('--field'), foreground: v('--text'), cursor: v('--accent'), cursorAccent: v('--field'), selectionBackground: v('--row-sel') || v('--tint2'), brightBlack: v('--muted') };
+    const light = css.colorScheme === 'light' || document.documentElement.dataset.theme === 'light';
+    // light: assistants print "white" for emphasis (Claude Code's title), which would vanish on a light background
+    return { background: v('--field'), foreground: v('--text'), cursor: v('--accent'), cursorAccent: v('--field'), selectionBackground: v('--row-sel') || v('--tint2'), brightBlack: v('--muted'),
+      ...(light ? { black: v('--text'), white: v('--muted'), brightWhite: v('--text') } : {}) };
   };
   addEventListener('theme-changed', () => { if (term) term.options.theme = theme(); });
 

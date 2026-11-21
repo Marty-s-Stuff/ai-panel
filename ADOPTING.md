@@ -23,6 +23,7 @@ Each app has its own Claude session; that session does the switch, one app at a 
      workFolderName: 'Library', workFolderIcon: '📚', notify, away, onShow, onHide });
    ```
    Pass `below: () => document.querySelector('#menubar')`, or keep the app's own code that sets `--term-top` / `--term-side-top` / `--term-side-bottom` (the GLB editor's `placeTerm()`). Fire `theme-changed` on `window` when the theme switches.
+   **Don't hold up the app while the panel loads:** fetch `ai-panel.html` and call `initTerminal` inside a non-blocking `(async () => { … })()` block, not with a top-level `await` in the app's main module. A top-level `await` delays everything after it (in the GLB editor that delayed `window.glbActionIn`, so the MCP server's first call could fail). Until the panel is ready, call it as `claude?.toggle()`.
 8. **Build.** Make sure the packaged app includes `node_modules/ai-panel/**` (electron-builder includes dependencies by itself) and `vendor/ai-panel/**`.
 
 ## Python apps (Hollow Editor)
