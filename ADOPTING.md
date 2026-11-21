@@ -27,11 +27,11 @@ Each app has its own Claude session; that session does the switch, one app at a 
 
 ## Python apps (Hollow Editor)
 
-1. **Getting it.** Add one line to the build (`editor/tools/build_exe.py`), before PyInstaller runs:
+1. **Getting it.** Copy `python/sync.py` from this repo into the app's own tools, **outside** the folder it fills (Hollow: `editor/tools/ai_panel_sync.py`), so the build can run it before that folder exists. Then have the build run it before PyInstaller, with the version on one line (Hollow: `AI_PANEL_VERSION` in `editor/tools/build_exe.py`):
    ```
-   py <editor>/ai-panel/python/sync.py v1.0.0 <editor>/ai-panel
+   py <editor>/tools/ai_panel_sync.py v1.1.0 <editor>/ai-panel
    ```
-   The first time, copy `python/sync.py` from this repo by hand (or download `v1.0.0` once). The script only replaces a folder it made itself (it writes `.ai-panel-version` in it), so the app's current `aipanel/` folder must be retired by hand, not overwritten.
+   The script only replaces a folder it made itself (it writes `.ai-panel-version` in it), so the app's current `aipanel/` folder must be retired by hand, not overwritten.
    Use a folder name with a hyphen (`ai-panel/`): the engine module is called `aipanel`, and a folder with the same name would hide it.
 2. **Server.**
    ```python
