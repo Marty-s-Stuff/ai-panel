@@ -8,7 +8,7 @@ let fails = 0; const ok = (cond, what) => { console.log((cond ? '  ok   ' : '  F
 
 console.log('CSS tokens');
 const css = fs.readFileSync(path.join(ROOT, 'ai-panel.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-const own = ['--ai', '--ok', '--on-primary'];   // the panel's optional tokens: may carry a default
+const own = ['--ai', '--ok', '--on-primary', '--ai-round', '--ai-font'];   // the panel's optional tokens: may carry a default
 const stripped = css.replace(/var\((--[\w-]+),\s*([^()]|\([^()]*\))*\)/g, (m, name) => (own.includes(name) ? 'var(' + name + ')' : m.replace(/#[0-9a-f]{3,8}\b/gi, 'BAD')));
 const bad = [...stripped.matchAll(/#[0-9a-f]{3,8}\b|BAD|\b(rgba?|hsla?)\((?!0,\s*0,\s*0,)[^)]*\)|:\s*(white|black|red|green|blue|purple|gray|grey)\b/gi)].map(m => m[0]);
 ok(!bad.length, 'no fixed colours' + (bad.length ? ': ' + [...new Set(bad)].join(', ') : ''));

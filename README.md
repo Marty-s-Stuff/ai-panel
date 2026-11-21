@@ -21,9 +21,9 @@ Written once here, so a fix or a new assistant reaches every app. **Each app nam
 
 ## What the panel does
 
-- a drop-down over the top of the app, or docked on the right; drag to resize
+- three layouts, switched with the layout button: a drop-down over the top of the app, docked on the right, or a **floating window** you drag by its title row and resize at its corner (position and size are remembered)
 - a message box (Enter sends, Shift+Enter = new line), keys ↑ ↓ Tab Esc Enter as buttons
-- **answer buttons** made from the choices on screen (menus and numbered / lettered lists), and a status chip: *Working… / Your turn / Waiting for your answer*
+- **answer buttons** made from the choices on screen (numbered menus, menus without numbers such as "❯ Yes, I trust this folder", and numbered / lettered lists), and a status chip: *Working… / Your turn / Waiting for your answer*
 - "Where should it work?" on every new conversation, with recent folders
 - sign in / sign out with each assistant's own flow, and which way you're signed in (subscription, API…)
 - desktop notifications when the assistant finishes or asks something while you look elsewhere
@@ -35,9 +35,13 @@ The engines only ever run commands a plugin defines (never a command line from t
 
 The CSS uses only these tokens from the app's `:root` (dark) and `:root[data-theme="light"]`. They are the Simple GLB Editor's names: `--panel`, `--title`, `--border`, `--text`, `--muted`, `--accent`, `--ctl`, `--ctl-border`, `--ctl-hover`, `--field`, `--primary`, `--primary-border`, `--primary-hover`, `--tint2`. The terminal's own colours are read from `--field`, `--text`, `--accent`, `--muted` and `--row-sel`. The menu uses the app's own `.menu` styles (`--menu`, `--menu-hover`).
 
-Optional panel tokens (with their defaults): `--ai` the panel's highlight colour (`--accent`; the GLB editor uses its purple `#7e57c2`), `--ok` the "Your turn" colour (`--accent`), `--on-primary` text on primary buttons (`#fff`).
+Optional panel tokens (with their defaults): `--ai` the panel's highlight colour (`--accent`; the GLB editor uses its purple `#7e57c2`), `--ok` the "Your turn" colour (`--accent`), `--on-primary` text on primary buttons (`#fff`), `--ai-round` how round the corners are (`1` = as drawn, `0` = square, `0.5` = half), `--ai-font` the font stack (`system-ui, "Segoe UI", …`).
 
 When the app switches theme it should fire `window.dispatchEvent(new Event('theme-changed'))` so the terminal recolours.
+
+### App themes (our look, Windows 10, Windows 11…)
+
+**Each app styles the panel as it sees fit.** A theme is just a set of the tokens above, so when the app switches its own theme, the panel follows. For example, a Windows 10 look would set flat greys, `--accent: #0078d7`, `--ai-round: 0` and `--ai-font: "Segoe UI", sans-serif`; a Windows 11 look rounder corners (`--ai-round: 0.8`) and `"Segoe UI Variable", "Segoe UI", sans-serif`. For anything the tokens don't cover, the app can override any rule from `ai-panel.css` in its own CSS (load it after `ai-panel.css`).
 
 ## The front end
 
@@ -72,7 +76,7 @@ CSS tokens only, every plugin valid and documented, and the Electron engine (plu
 ```powershell
 py -3.11 test/serve.py
 ```
-then open http://127.0.0.1:5199/test/selftest.html: the whole panel against the Python engine and a fake assistant (`test/fake-agent.js`). Pick 🧪 Fake in ▾ › AI assistant; type `choices`, `menu`, `env`, `bye`.
+then open http://127.0.0.1:5199/test/selftest.html: the whole panel against the Python engine and a fake assistant (`test/fake-agent.js`). Pick 🧪 Fake in ▾ › AI assistant; type `choices`, `menu`, `pick`, `env`, `bye`.
 
 ## Versions
 

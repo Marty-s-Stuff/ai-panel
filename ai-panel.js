@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.0.0';
+export const AI_PANEL_VERSION = '1.1.0';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -30,22 +30,34 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   const T = bridge || window.aiPanelBridge || window.glbTerm || null; // null in a plain browser page with no engine
   const panel = $('#term'), host = $('#termHost'), menu = $('#claudeMenu'), note = $('#claudeNote');
   let term = null, fit = null, cur = null, curKind = null, auth = null, starting = false;
-  const prefs = { height: 46, width: 560, mode: 'drop', folder: null, folders: [], ...settings.get('terminal', {}) }; // mode: 'drop' (over the top) | 'side' (docked right)
+  const prefs = { height: 46, width: 560, mode: 'drop', folder: null, folders: [], ...settings.get('terminal', {}) }; // mode: 'drop' (over the top) | 'side' (docked right) | 'float' (a window you move)
+  prefs.float = { x: 80, y: 90, w: 640, h: 460, ...prefs.float };
   panel.style.setProperty('--term-h', prefs.height + 'vh');
   document.documentElement.style.setProperty('--term-w', prefs.width + 'px');
   const place = () => { const el = below?.(); if (!el) return; const y = Math.round(el.getBoundingClientRect().bottom) + 'px'; document.documentElement.style.setProperty('--term-top', y); document.documentElement.style.setProperty('--term-side-top', y); };
   if (below) addEventListener('resize', place);
-  /** Docked right: a full-height column, the app shrinks beside it. Drop-down: over the top, under the app's bars. */
+  /** Docked right: a full-height column, the app shrinks beside it. Drop-down: over the top, under the app's bars. Float: a window you drag by its title row and resize at its corner. */
+  const MODES = { drop: ['side', '◨ Dock right', 'Dock the terminal on the right as a full-height column next to your work (good for a long chat while you work).', '▲ Hide'],
+    side: ['float', '⧉ Float', 'Undock the terminal into a window you can drag around (by its title row) and resize (at its bottom-right corner).', '▶ Hide'],
+    float: ['drop', '▤ Drop down', 'Show the terminal as a drop-down over the top of the app instead.', '✕ Hide'] };
   function applyMode() {
-    const side = prefs.mode === 'side';
+    if (!MODES[prefs.mode]) prefs.mode = 'drop';
+    const side = prefs.mode === 'side', float = prefs.mode === 'float', f = prefs.float;
     panel.classList.toggle('side', side);
+    panel.classList.toggle('float', float);
+    if (float) { // keep it on screen (the window may have shrunk since)
+      f.w = Math.min(f.w, innerWidth - 20); f.h = Math.min(f.h, innerHeight - 20);
+      f.x = Math.max(0, Math.min(f.x, innerWidth - f.w)); f.y = Math.max(0, Math.min(f.y, innerHeight - f.h));
+    }
+    Object.assign(panel.style, float ? { left: f.x + 'px', top: f.y + 'px', width: f.w + 'px', height: f.h + 'px' } : { left: '', top: '', width: '', height: '' });
     document.body.classList.toggle('termside', side && !panel.hidden);
     $('#btnClaude').classList.toggle('pressed', !panel.hidden); // pressed in while the panel is open
     place();
     window.dispatchEvent(new Event('term-placed'));
-    $('#termMode').textContent = side ? '▤ Drop down' : '◨ Dock right';
-    $('#termMode').title = side ? 'Show the terminal as a drop-down over the top of the app instead.' : 'Dock the terminal on the right as a full-height column next to your work (good for a long chat while you work).';
-    $('#termHide').textContent = side ? '▶ Hide' : '▲ Hide';
+    const [, label, tip, hide] = MODES[prefs.mode];
+    $('#termMode').textContent = label;
+    $('#termMode').title = tip;
+    $('#termHide').textContent = hide;
     window.dispatchEvent(new Event('panels-changed')); // the app's views resize
     requestAnimationFrame(() => { try { fit?.fit(); } catch {} });
   }
@@ -97,6 +109,18 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
       if (menu.length) { if (!lines[i] || /^\s{3,}\S/.test(raw[i])) continue; break; } // blank / indented description lines inside the menu
     }
     if (menu.length >= 2 && menu.some(o => o.current) && menu.every((o, i) => !i || nextKey(menu[i - 1].key, o.key))) return { kind: 'menu', options: menu };
+    // 1b) a menu without numbers ("❯ Yes, I trust this folder" with the other choices indented to the same column): a click
+    // moves the highlight there with the arrow keys, then presses Enter. (Not the input box: that has a ──── line round it.)
+    const flat = raw.map(l => l.replace(/[│┃]/g, ' ').replace(/\s+$/, ''));
+    for (let i = flat.length - 1; i >= 0; i--) {
+      const m = flat[i].match(/^(\s*)([❯›>])(\s+)(\S.{0,158})$/); if (!m || /^\d{1,2}[.)]\s/.test(m[4])) continue;
+      if (/^[─━▔-]{10,}/.test(lines[i - 1] || '') || /^[─━▔-]{10,}/.test(lines[i + 1] || '')) break;
+      const col = m[1].length + m[2].length + m[3].length, item = l => l.length > col && !l.slice(0, col).trim() && l[col] !== ' ';
+      let a = i, z = i; while (a > 0 && item(flat[a - 1])) a--; while (z < flat.length - 1 && item(flat[z + 1])) z++;
+      while (a < i && /[?:]$/.test(flat[a])) a++; // the question above the choices, at the same column (Kiro's "Login now?")
+      if (z > a && z - a < 9) return { kind: 'move', options: flat.slice(a, z + 1).map((l, k) => ({ key: String(k + 1), text: tidy(l.slice(col)), current: a + k === i })) };
+      break;
+    }
     // 2) a question in the assistant's own text: a numbered or lettered list at the END of its last message (just above the input box)
     let end = lines.length - 1;
     for (let i = lines.length - 1; i > 0; i--) if (/^[❯>]/.test(lines[i]) && /^[─━▔-]{10,}/.test(lines[i - 1])) { end = i - 2; break; } // the input box: ──── / ❯ prompt
@@ -117,7 +141,7 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
     const c = cur ? findChoices() : null, sig = c ? c.kind + c.options.map(o => o.key + o.text).join('|') : '';
     if (sig === lastChoices) return; lastChoices = sig; setState();
     const isOwn = o => /^(something else|other)\b|type (something|what you want|your own)/i.test(o.text); // "type what you want" choices (ours, or Claude Code's own "Type something.")
-    $('#termOptions').innerHTML = c ? `<span class="muted">Answer:</span>` + c.options.filter(o => c.kind === 'menu' || !isOwn(o)).map(o => `<button data-answer="${esc(o.key)}" data-kind="${c.kind}" title="${esc(o.text)}\nClick = ${c.kind === 'menu' ? 'pick it' : 'send “' + esc(o.key) + '” to ' + esc(A().name)}">${esc(o.key)}. ${esc(o.text.length > 48 ? o.text.slice(0, 46) + '…' : o.text)}</button>`).join('')
+    $('#termOptions').innerHTML = c ? `<span class="muted">Answer:</span>` + c.options.filter(o => c.kind !== 'text' || !isOwn(o)).map(o => `<button data-answer="${esc(o.key)}" data-kind="${c.kind}" title="${esc(o.text)}\nClick = ${c.kind !== 'text' ? 'pick it' : 'send “' + esc(o.key) + '” to ' + esc(A().name)}">${c.kind === 'move' ? '' : esc(o.key) + '. '}${esc(o.text.length > 48 ? o.text.slice(0, 46) + '…' : o.text)}</button>`).join('')
       : `<span class="muted" title="When ${esc(A().name)} shows a menu or asks with 1. 2. 3. / A) B) C), the choices appear here as buttons.">Choices ${esc(A().name)} offers show up here as buttons</span>`;
   }
   const queueScan = () => { clearTimeout(scanTimer); scanTimer = setTimeout(renderChoices, 120); lastOut = performance.now(); setState(); };
@@ -155,7 +179,10 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   $('#termSend').addEventListener('click', () => { sendBox(); input.focus(); });
   bar.addEventListener('click', e => {
     const a = e.target.closest('[data-answer]'), k = e.target.closest('[data-key]');
-    if (a && cur) { T.write(cur, a.dataset.kind === 'menu' ? a.dataset.answer : a.dataset.answer + '\r'); }
+    if (a && cur && a.dataset.kind === 'move') { // arrows from the highlighted choice to this one, then Enter
+      const c = findChoices(), from = c?.kind === 'move' ? c.options.findIndex(o => o.current) : -1, to = +a.dataset.answer - 1;
+      if (from >= 0) T.write(cur, (to > from ? ESC + '[B' : ESC + '[A').repeat(Math.abs(to - from)) + '\r');
+    } else if (a && cur) { T.write(cur, a.dataset.kind === 'menu' ? a.dataset.answer : a.dataset.answer + '\r'); }
     if (k && cur) T.write(cur, { enter: '\r', esc: ESC, up: ESC + '[A', down: ESC + '[B', tab: '\t' }[k.dataset.key]);
     term?.focus();
   });
@@ -269,7 +296,20 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   $('#termGripSide').addEventListener('pointerdown', e => gripDrag(e,
     ev => { prefs.width = Math.round(Math.max(320, Math.min(innerWidth * 0.7, innerWidth - ev.clientX))); document.documentElement.style.setProperty('--term-w', prefs.width + 'px'); },
     () => window.dispatchEvent(new Event('panels-changed'))));
-  $('#termMode').addEventListener('click', () => { prefs.mode = prefs.mode === 'side' ? 'drop' : 'side'; settings.set('terminal', prefs); applyMode(); term?.focus(); });
+  $('#termMode').addEventListener('click', () => { prefs.mode = MODES[prefs.mode][0]; settings.set('terminal', prefs); applyMode(); term?.focus(); });
+  // float: drag the title row to move it; the browser's own corner grip resizes it (CSS resize), remembered when you let go
+  $('.term-head').addEventListener('pointerdown', e => {
+    if (prefs.mode !== 'float' || e.button || e.target.closest('button')) return;
+    const f = prefs.float, dx = e.clientX - f.x, dy = e.clientY - f.y;
+    gripDrag(e, ev => { f.x = Math.max(0, Math.min(ev.clientX - dx, innerWidth - 60)); f.y = Math.max(0, Math.min(ev.clientY - dy, innerHeight - 40)); panel.style.left = f.x + 'px'; panel.style.top = f.y + 'px'; });
+  });
+  let sizeTimer = 0;
+  new ResizeObserver(() => {
+    if (prefs.mode !== 'float' || panel.hidden) return;
+    const f = prefs.float, w = panel.offsetWidth, h = panel.offsetHeight;
+    if (w !== f.w || h !== f.h) { f.w = w; f.h = h; clearTimeout(sizeTimer); sizeTimer = setTimeout(() => settings.set('terminal', prefs), 400); }
+  }).observe(panel);
+  addEventListener('resize', () => { if (prefs.mode === 'float' && !panel.hidden) applyMode(); });
   applyMode();
 
   // the menu-line button and its ▾ menu

@@ -58,7 +58,7 @@ Each app has its own Claude session; that session does the switch, one app at a 
 
 - the 🤖 button opens and closes it, Ctrl+` too, and the ▾ menu shows the sign-in state
 - Claude signs in and out both ways (subscription / Anthropic API)
-- answer buttons, Esc / Enter / arrow buttons, Shift+Enter, drop-down ↔ docked, both resize grips, light and dark theme
+- answer buttons, Esc / Enter / arrow buttons, Shift+Enter, drop-down → docked → floating (drag, resize), both resize grips, light and dark theme (and any other theme the app has)
 - New conversation → "Where should it work?" → it starts there; recent folders are remembered (the settings key is still `terminal`)
 - notifications while the window isn't in front
 - the app's MCP server still names the session (`GLB_SESSION_NAME` / `HOLLOW_SESSION_NAME`)
