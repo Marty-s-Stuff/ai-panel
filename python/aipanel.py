@@ -7,17 +7,18 @@ Use:  import aipanel; aipanel.configure(app_name='Hollow Editor', session_var='H
       then route POST /api/term/<kind> to  aipanel.handle(kind, json_body)  -> dict to send back as JSON."""
 import itertools, json, os, re, shutil, subprocess, threading
 
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 HERE = os.path.dirname(os.path.abspath(__file__))
 _terms, _ids, _lock = {}, itertools.count(1), threading.Lock()
-_cfg = {'app_name': 'the app', 'session_var': None, 'builtin_dir': os.path.join(HERE, '..', 'agents'), 'extra_dirs': [], 'boot': None}
+_cfg = {'app_name': 'the app', 'session_var': None, 'builtin_dir': os.path.join(HERE, '..', 'agents'), 'extra_dirs': [], 'boot': None, 'restart': None}
 
 
-def configure(app_name=None, session_var=None, builtin_dir=None, extra_dirs=None, boot=None):
+def configure(app_name=None, session_var=None, builtin_dir=None, extra_dirs=None, boot=None, restart=None):
     """app_name fills {appName} in plugins; session_var (e.g. 'HOLLOW_SESSION_NAME') is set to "In-app <assistant>" for
     the app's own MCP server; builtin_dir = where the shipped agents/ folder is; extra_dirs = more plugin folders;
-    boot = the app's aipanel_boot.Boot (panel updates)."""
-    for k, v in (('app_name', app_name), ('session_var', session_var), ('builtin_dir', builtin_dir), ('extra_dirs', extra_dirs), ('boot', boot)):
+    boot = the app's aipanel_boot.Boot (panel updates); restart = a function that restarts the whole app (window
+    included), for "Restart now" after an update. Without it the panel asks the user to close and reopen the app."""
+    for k, v in (('app_name', app_name), ('session_var', session_var), ('builtin_dir', builtin_dir), ('extra_dirs', extra_dirs), ('boot', boot), ('restart', restart)):
         if v is not None:
             _cfg[k] = v
 
@@ -243,10 +244,19 @@ def handle(kind, d):
         if kind == 'start':
             return {'ok': True, 'value': start(d)}
         if kind == 'update':   # panel updates (aipanel_boot.py, built into the app)
+            if d.get('what') == 'restart':   # "Restart now": the app's own restart, after this answer has gone back
+                if not _cfg['restart']:
+                    return {'ok': False, 'error': 'This app cannot restart itself'}
+                kill_all()
+                threading.Timer(0.5, _cfg['restart']).start()
+                return {'ok': True, 'value': True}
             if not _cfg['boot']:
                 return {'ok': False, 'error': 'This app has no panel updater'}
             try:
-                return {'ok': True, 'value': _cfg['boot'].update(d.get('what'), d.get('tag'))}
+                r = _cfg['boot'].update(d.get('what'), d.get('tag'))
+                if d.get('what') == 'check':
+                    r['canRestart'] = bool(_cfg['restart'])
+                return {'ok': True, 'value': r}
             except Exception as e:   # a failed download (network, bad archive) must not take the server down
                 return {'ok': False, 'error': str(e)}
         if kind == 'read':

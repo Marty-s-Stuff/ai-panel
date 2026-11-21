@@ -71,6 +71,17 @@
 /* "Where should it work?" */
 #termWs { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); }
 #termWs[hidden] { display: none; }
+/* "Restart to use the update" popup: over the whole app, whether the panel is open or not */
+#aiRestart { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); font: 13px/1.4 var(--ai-font, system-ui, "Segoe UI", Roboto, sans-serif); color: var(--text); }
+.ai-restart-box { width: min(420px, 92%); background: var(--panel); border: 1px solid var(--ai, var(--accent)); border-radius: calc(12px * var(--ai-round, 1)); padding: 16px 18px; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+.ai-restart-box h3 { margin: 0 0 8px; font-size: 15px; }
+.ai-restart-box p { margin: 0 0 8px; }
+.ai-restart-box .muted { color: var(--muted); }
+#aiRestart .grow { flex: 1; }
+#aiRestart button { font: inherit; color: var(--text); background: var(--ctl); border: 1px solid var(--ctl-border); border-radius: calc(5px * var(--ai-round, 1)); padding: 4px 12px; height: 30px; cursor: pointer; }
+#aiRestart button:hover { background: var(--ctl-hover); }
+#aiRestart button.primary { background: var(--primary); border-color: var(--primary-border); color: var(--on-primary, #fff); }
+#aiRestart button.primary:hover { background: var(--primary-hover); }
 .ws-box { width: min(460px, 92%); max-height: 90%; overflow: auto; background: var(--panel); border: 1px solid var(--ai, var(--accent)); border-radius: calc(12px * var(--ai-round, 1)); padding: 16px 18px; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
 .ws-box h3 { margin: 0 0 6px; font-size: 15px; }
 .ws-box .hint { color: var(--muted); font-size: 12px; }

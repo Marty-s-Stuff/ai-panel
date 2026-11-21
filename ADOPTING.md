@@ -84,6 +84,11 @@ The choosing is done by a small **boot** file that is built into the app and nev
    ```
    and serve `/ai-panel/…` from `AI_BOOT.dir`.
 3. PyInstaller: bundle `aipanel_boot` as a normal module, but **not** `aipanel` (a bundled copy would win over a downloaded one; it is imported from `AI_BOOT.dir` at run time). Keep `ai-panel/` as data and `--collect-all winpty`; add hidden imports for the standard modules `aipanel.py` uses (`itertools`, `json`, `re`, `shutil`, `subprocess`, `threading`).
+4. **"Restart now"** (from v1.2.2): after an install the panel shows a popup, "Restart <app> to use the latest terminal update", with **Restart now / Later**. A Python app must say how it restarts: pass `restart=<function>` to `aipanel.configure`. The function must restart the **whole app, window included** (for example: start a new copy of the exe, then exit this one). It's called half a second after the button's answer has gone back, with the assistants already stopped. Without it, the popup asks the user to close and reopen the app.
+
+**"Restart now" in Electron apps** works with no app change: the engine calls `app.relaunch()` + `app.quit()`, relaunching the real `.exe` for electron-builder **portable** apps (`PORTABLE_EXECUTABLE_FILE`), since a portable app runs from an unpacked temporary copy. To restart differently, pass `restart: () => …` to `setup`. The app's normal closing still runs, so its "unsaved changes?" question can still stop the quit.
+
+**Note:** the popup comes from the panel version that **does the install**. An app on the built-in v1.2.0 or v1.2.1 installs updates without the popup (the menu says to restart instead); from v1.2.2 on, every install shows it.
 
 **Check:** the ▾ menu ends with "AI panel v1.2.0 (built in)". When v1.2.1 is out: a dot on ▾ → Install → restart → "AI panel v1.2.1 (updated)"; then ↩ Use the built-in AI panel → restart → "v1.2.0 (built in)" again.
 

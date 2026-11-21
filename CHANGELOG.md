@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.2 — 2026-11-21
+
+- **Restart popup after an update**: "AI panel v… is installed. Restart <app> to use the latest terminal update", with **Restart now / Later** (also after "Use the built-in AI panel"). It says when a running conversation would be closed.
+- **Restart now really restarts the app.** Electron apps need no change: `app.relaunch()` + `app.quit()`, relaunching the real `.exe` for portable builds; `setup({ restart })` can replace it. Python apps pass `configure(restart=<function>)`; without one, the popup asks you to close and reopen the app.
+- The popup comes from the panel version that does the install, so it appears from installs made by v1.2.2 on.
+
 ## v1.2.1 — 2026-11-21
 
 Fixes found by the Simple GLB Editor's session:

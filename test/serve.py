@@ -23,7 +23,8 @@ with open(os.path.join(TMP, 'fake.json'), 'w', encoding='utf-8') as f:
 with open(os.path.join(TMP, 'missing.json'), 'w', encoding='utf-8') as f:
     json.dump({'id': 'missing', 'name': 'Missing', 'find': {'commands': ['no-such-ai-program-xyz']}, 'chat': {'args': []},
                'install': {'command': 'winget install Nothing', 'shell': 'PowerShell'}}, f)
-aipanel.configure(app_name='Self-test', session_var='FAKE_APP_VAR', extra_dirs=[TMP], builtin_dir=os.path.join(BOOT.dir, 'agents'), boot=BOOT)
+aipanel.configure(app_name='Self-test', session_var='FAKE_APP_VAR', extra_dirs=[TMP], builtin_dir=os.path.join(BOOT.dir, 'agents'), boot=BOOT,
+                  restart=lambda: os.execv(sys.executable, [sys.executable] + sys.argv))   # "Restart now": this server starts itself again
 
 
 class H(BaseHTTPRequestHandler):

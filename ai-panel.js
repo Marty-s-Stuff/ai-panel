@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.2.1';
+export const AI_PANEL_VERSION = '1.2.2';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -249,9 +249,27 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
     if (what === 'builtin' && !confirm(`Go back to the AI panel ${appName} was built with (v${upd.builtIn})? It is used from the next start.`)) return;
     menu.hidden = true;
     status(what === 'install' ? `Downloading AI panel ${upd.latest}…` : 'Going back to the built-in AI panel…');
-    try { const r = await T.update(what, upd.latest); upd.pending = r.pending; status(r.pending ? `Done: restart ${appName} to use ${r.pending === 'built-in' ? 'the built-in AI panel' : 'AI panel ' + r.pending}` : 'Nothing to change'); }
+    try { const r = await T.update(what, upd.latest); upd.pending = r.pending; status(r.pending ? `Done: restart ${appName} to use ${r.pending === 'built-in' ? 'the built-in AI panel' : 'AI panel ' + r.pending}` : 'Nothing to change'); if (r.pending) askRestart(r.pending); }
     catch (e) { status('AI panel update failed: ' + e.message); }
     renderAgent();
+  }
+  /** After an install: "Restart now" (the app restarts itself, if it can) or "Later" (it's used from the next start anyway). */
+  function askRestart(pending) {
+    document.getElementById('aiRestart')?.remove();
+    const can = !!upd.canRestart, chat = cur && curKind === 'chat', box = document.createElement('div');
+    const what = pending === 'built-in' ? `to go back to the built-in AI panel (v${esc(upd.builtIn)})` : 'to use the latest terminal update';
+    box.id = 'aiRestart';
+    box.innerHTML = `<div class="ai-restart-box" role="dialog" aria-modal="true" aria-labelledby="aiRestartTitle"><h3 id="aiRestartTitle">⬆ ${pending === 'built-in' ? 'Back to the built-in AI panel' : 'AI panel ' + esc(pending) + ' is installed'}</h3>`
+      + `<p>Restart ${esc(appName)} ${what}.${can && chat ? ' The conversation running in the AI panel will be closed.' : ''}</p>`
+      + (can ? '' : `<p class="muted">Close ${esc(appName)} and open it again.</p>`)
+      + `<div class="ws-btns"><span class="grow"></span>${can ? '<button data-r="later" title="It is used the next time you open ' + esc(appName) + '.">Later</button><button data-r="now" class="primary">Restart now</button>' : '<button data-r="later" class="primary">OK</button>'}</div></div>`;
+    document.body.appendChild(box); box.querySelector('.primary').focus();
+    box.onclick = async e => {
+      const b = e.target.closest('[data-r]'); if (!b) return;
+      if (b.dataset.r === 'now') { b.disabled = true; status(`Restarting ${appName}…`); try { await T.update('restart'); return; } catch (err) { status('Restart failed: ' + err.message + ` (close ${appName} and open it again)`); } }
+      box.remove();
+    };
+    box.onkeydown = e => { if (e.key === 'Escape') box.remove(); };
   }
   async function loadAgents() { if (!T) { renderAgent(); return; } try { agents = await T.agents(); } catch { agents = []; } if (!agents.some(a => a.id === agentId)) agentId = agents[0]?.id || 'claude-code'; renderAgent(); }
   function useAgent(id) {

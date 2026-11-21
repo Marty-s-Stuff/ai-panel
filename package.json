@@ -1,6 +1,6 @@
 {
   "name": "ai-panel",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "One shared AI panel for Marty's apps: sign in to Claude, Codex, Copilot and other command-line AI assistants, and let them work inside the app.",
   "main": "node/aipanel.js",
   "files": ["ai-panel.html", "ai-panel.css", "ai-panel.js", "bridge-http.js", "node/", "python/", "agents/", "xterm/", "README.md", "ADOPTING.md", "CHANGELOG.md"],

@@ -10,7 +10,7 @@ const os = require('os');
 const path = require('path');
 const { execFile, execFileSync } = require('child_process');
 
-const VERSION = '1.2.1';
+const VERSION = '1.2.2';
 const appData = () => process.env.APPDATA || os.homedir();
 /** Marty's own plugins, shared by every app ("Add another assistant…" opens it). */
 const sharedDir = () => path.join(appData(), 'ai-agents');
@@ -110,7 +110,20 @@ function setup({ ipcMain, app, shell, dialog, getWin, pty, ...opts }) {
   ipcMain.on('term:resize', (_e, id, c, r) => { try { if (c > 1 && r > 1) terms.get(id)?.resize(c, r); } catch {} });
   ipcMain.on('term:kill', (_e, id) => { try { terms.get(id)?.kill(); } catch {} });
   // panel updates (node/boot.js, built into the app): check / install a newer 1.x / back to the built-in copy
-  ipcMain.handle('aipanel:update', (_e, what, tag) => { if (!opts.boot) throw new Error('This app has no panel updater'); return opts.boot.update(what, tag); });
+  ipcMain.handle('aipanel:update', async (_e, what, tag) => {
+    if (what === 'restart') { // "Restart now" after an install: the app's own restart, else Electron's relaunch
+      setTimeout(opts.restart || (() => {
+        // a portable exe (electron-builder) runs from an unpacked temp copy: start the real .exe again, not that copy
+        const exe = process.env.PORTABLE_EXECUTABLE_FILE;
+        app.relaunch(exe ? { execPath: exe, args: process.argv.slice(1) } : undefined); app.quit();
+      }), 300); // (after this answer reaches the page)
+      return true;
+    }
+    if (!opts.boot) throw new Error('This app has no panel updater');
+    const r = await opts.boot.update(what, tag);
+    if (what === 'check') r.canRestart = true;
+    return r;
+  });
   app.on('will-quit', () => { for (const p of terms.values()) try { p.kill(); } catch {} });
   return E;
 }
