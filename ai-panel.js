@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.1.0';
+export const AI_PANEL_VERSION = '1.2.0';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -218,9 +218,38 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
       // "AI assistant": always there; opens the list of assistants (one per plugin) + Add another assistant…
       + `<hr><button data-claude="pick" class="menu-sub" title="Swap the AI assistant this panel uses. Each one is a plugin; Claude Code is built in.">🔀 AI assistant: ${esc(a.icon)} ${esc(a.name)} <span class="muted">${pickerOpen ? '▾' : '▸'}</span></button>`
       + (pickerOpen ? '<div class="menu-list">' + agents.map(x => `<button data-agent="${esc(x.id)}" title="${esc(x.description)}${x.installed ? '' : ' (not installed on this computer)'}">${x.id === a.id ? '● ' : '○ '}${esc(x.icon)} ${esc(x.name)}${x.builtIn ? '' : ' <span class="muted">(plugin)</span>'}${x.installed ? '' : ' <span class="muted">· not installed</span>'}</button>`).join('')
-        + '<button data-claude="addAgent" title="Opens your plugins folder: drop in a .json file describing another command-line AI assistant (the guide is in that folder), then it shows up in this list.">➕ Add another assistant…</button></div>' : '');
+        + '<button data-claude="addAgent" title="Opens your plugins folder: drop in a .json file describing another command-line AI assistant (the guide is in that folder), then it shows up in this list.">➕ Add another assistant…</button></div>' : '')
+      + updateItems();
   }
   let pickerOpen = false;
+
+  // ---- panel updates: at start the app's updater asks GitHub for a newer 1.x; you choose Install / Not now / Skip this
+  // version. An installed version is used from the next start; "Use the built-in version" goes back.
+  let upd = null, updLater = false;
+  const offered = () => !!(upd?.latest && !updLater && prefs.skipUpdate !== upd.latest && upd.pending !== upd.latest);
+  function updateItems() {
+    $('#btnClaudeMenu').classList.toggle('has-update', offered());
+    if (!upd) return '';
+    const out = [];
+    if (offered()) out.push(`<div class="ai-update"><b>⬆ AI panel ${esc(upd.latest)} is available</b> <span class="muted">(this is v${esc(upd.running)})</span>`
+      + `<div class="ai-update-btns"><button data-upd="install" class="primary" title="Download it from GitHub now; ${esc(appName)} uses it from its next start.">Install</button><button data-upd="later" title="Ask again next time ${esc(appName)} starts.">Not now</button><button data-upd="skip" title="Don't offer this version again (a later one will be offered).">Skip this version</button></div>`
+      + `<a href="${esc(upd.notes)}" target="_blank" rel="noopener">What's new</a></div>`);
+    if (upd.pending) out.push(`<div class="menu-note" title="The panel can't swap itself while ${esc(appName)} runs.">${upd.pending === 'built-in' ? 'Back to the built-in AI panel' : 'AI panel ' + esc(upd.pending) + ' is installed'}: restart ${esc(appName)} to use it.</div>`);
+    if (upd.active && upd.pending !== 'built-in') out.push(`<button data-upd="builtin" title="If the update misbehaves: go back to the AI panel ${esc(appName)} was built with (v${esc(upd.builtIn)}), from its next start.">↩ Use the built-in AI panel (v${esc(upd.builtIn)})</button>`);
+    out.push(`<div class="menu-note">AI panel v${esc(upd.running)}${upd.active ? ' (updated)' : ' (built in)'}</div>`); // which copy runs, to check an update took
+    return '<hr>' + out.join('');
+  }
+  async function checkUpdate() { if (!T?.update) return; try { upd = await T.update('check'); } catch { upd = null; } renderAgent(); }
+  async function updateAction(what) {
+    if (what === 'later') { updLater = true; renderAgent(); return; }
+    if (what === 'skip') { prefs.skipUpdate = upd.latest; settings.set('terminal', prefs); renderAgent(); return; }
+    if (what === 'builtin' && !confirm(`Go back to the AI panel ${appName} was built with (v${upd.builtIn})? It is used from the next start.`)) return;
+    menu.hidden = true;
+    status(what === 'install' ? `Downloading AI panel ${upd.latest}…` : 'Going back to the built-in AI panel…');
+    try { const r = await T.update(what, upd.latest); upd.pending = r.pending; status(r.pending ? `Done: restart ${appName} to use ${r.pending === 'built-in' ? 'the built-in AI panel' : 'AI panel ' + r.pending}` : 'Nothing to change'); }
+    catch (e) { status('AI panel update failed: ' + e.message); }
+    renderAgent();
+  }
   async function loadAgents() { if (!T) { renderAgent(); return; } try { agents = await T.agents(); } catch { agents = []; } if (!agents.some(a => a.id === agentId)) agentId = agents[0]?.id || 'claude-code'; renderAgent(); }
   function useAgent(id) {
     if (id === agentId) return;
@@ -320,6 +349,7 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
     const si = e.target.closest('[data-signin]'), ag = e.target.closest('[data-agent]'), b = e.target.closest('[data-claude]');
     if (si) { menu.hidden = true; return signIn(si.dataset.signin); }
     if (ag) { menu.hidden = true; return useAgent(ag.dataset.agent); }
+    const up = e.target.closest('[data-upd]'); if (up) return updateAction(up.dataset.upd);
     if (!b) return;
     if (b.dataset.claude === 'pick') { pickerOpen = !pickerOpen; renderAgent(); if (pickerOpen) loadAgents(); return; } // (the menu stays open: the list shows at once, then is re-read from the plugin folders)
     menu.hidden = true;
@@ -328,6 +358,7 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   });
   $('#termHide').addEventListener('click', () => toggle(false));
   loadAgents();
+  checkUpdate();
   $('#termNew').addEventListener('click', () => newConversation());
 
   // ---- where the assistant works: asked on every New conversation (last folder picked, so Enter just goes); recent folders kept
@@ -390,5 +421,5 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
     if (cur && curKind === 'chat' && folder().toLowerCase() === String(dir).toLowerCase()) { type(message); return; }
     return startIn(dir, null, message);
   }
-  return { version: AI_PANEL_VERSION, send, startIn, loadAgents: async () => { await loadAgents(); return agents; }, agents: () => agents, agent: () => A(), useAgent, newConversation, folder, get _term() { ensureTerm(); return term; }, _findChoices: () => term && findChoices(), _write: d => new Promise(r => { ensureTerm(); term.write(d, r); }), toggle, open, startClaude, signIn, signOut, refreshAuth, get running() { return !!cur; } };
+  return { version: AI_PANEL_VERSION, checkUpdate, send, startIn, loadAgents: async () => { await loadAgents(); return agents; }, agents: () => agents, agent: () => A(), useAgent, newConversation, folder, get _term() { ensureTerm(); return term; }, _findChoices: () => term && findChoices(), _write: d => new Promise(r => { ensureTerm(); term.write(d, r); }), toggle, open, startClaude, signIn, signOut, refreshAuth, get running() { return !!cur; } };
 }

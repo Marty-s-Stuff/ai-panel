@@ -10,7 +10,7 @@ const os = require('os');
 const path = require('path');
 const { execFile, execFileSync } = require('child_process');
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const appData = () => process.env.APPDATA || os.homedir();
 /** Marty's own plugins, shared by every app ("Add another assistant…" opens it). */
 const sharedDir = () => path.join(appData(), 'ai-agents');
@@ -109,6 +109,8 @@ function setup({ ipcMain, app, shell, dialog, getWin, pty, ...opts }) {
   ipcMain.on('term:write', (_e, id, d) => { try { terms.get(id)?.write(d); } catch {} });
   ipcMain.on('term:resize', (_e, id, c, r) => { try { if (c > 1 && r > 1) terms.get(id)?.resize(c, r); } catch {} });
   ipcMain.on('term:kill', (_e, id) => { try { terms.get(id)?.kill(); } catch {} });
+  // panel updates (node/boot.js, built into the app): check / install a newer 1.x / back to the built-in copy
+  ipcMain.handle('aipanel:update', (_e, what, tag) => { if (!opts.boot) throw new Error('This app has no panel updater'); return opts.boot.update(what, tag); });
   app.on('will-quit', () => { for (const p of terms.values()) try { p.kill(); } catch {} });
   return E;
 }

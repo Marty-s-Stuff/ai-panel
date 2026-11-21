@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.0 — 2026-11-21
+
+- **Panel updates without a rebuild.** At start the app asks GitHub for a newer 1.x; the ▾ menu shows a dot and offers **Install / Not now / Skip this version** (with a "What's new" link). An installed version is used from the app's next start; **↩ Use the built-in AI panel** goes back. The menu always ends with the running version ("AI panel v1.2.0 (built in)").
+- The updater (`node/boot.js`, `python/aipanel_boot.py`) is built into each app and never replaced by an update. It only uses versions with the built-in one's first number, from 1.2.0 on, checks the tag against GitHub's own list, and only unpacks the panel's own files.
+- New bridge call `update(what, tag)` (preload: IPC `aipanel:update`; HTTP: `/api/term/update`); `setup({ boot, pty })` / `configure(boot=…)`; `checkUpdate()` on the panel's handle.
+- **One-time change per app**: ADOPTING.md › "Panel updates without a rebuild".
+
 ## v1.1.0 — 2026-11-21
 
 - **Floating window**: a third layout (after drop-down and docked right). Drag it by its title row and resize it at its corner; its position and size are kept (settings `terminal.float`) and it stays on screen when the app window shrinks.

@@ -54,6 +54,38 @@ Each app has its own Claude session; that session does the switch, one app at a 
    ```
    `term.send(dir, message)` and `term.startIn(dir, agentId, message)` work as before (the "Send to <agent>" buttons).
 
+## Panel updates without a rebuild (from v1.2.0): a one-time change
+
+From v1.2.0 the panel can update itself: at start the app asks GitHub for a newer **1.x**, and the ▾ menu offers **Install / Not now / Skip this version**. An installed version is used from the app's **next start**; **↩ Use the built-in AI panel** goes back. Only versions with the same first number as the built-in one are used (a 2.0 still needs a rebuild), and never versions before 1.2.0.
+
+The choosing is done by a small **boot** file that is built into the app and never replaced by an update, so a bad update can always be undone. Each app needs this once:
+
+**Electron apps**
+1. `package.json`: `"ai-panel": "github:Marty-s-Stuff/ai-panel#v1.2.0"`, then `npm install`.
+2. `main.js`: replace the `require('ai-panel').setup({...})` line with
+   ```js
+   const aiBoot = require('ai-panel/node/boot.js').createBoot({ updateDir: path.join(app.getPath('userData'), 'ai-panel') });
+   require(path.join(aiBoot.dir, 'node', 'aipanel.js')).setup({ ipcMain, app, shell, dialog, getWin: () => win, appName: '…', sessionVar: '…', boot: aiBoot, pty: require('node-pty') });
+   ```
+   (`pty` matters: an updated copy lives outside the app, where `require('node-pty')` would not find the app's own.)
+3. Preload: add the new last line of `node/preload.js` to the app's copy: `update: (what, tag) => ipcRenderer.invoke('aipanel:update', what, tag),`
+4. **Serve the page's panel files from `aiBoot.dir`**: wherever the page loads `ai-panel.html` / `.css` / `.js`, `bridge-http.js` and `xterm/` (the GLB editor: `vendor/ai-panel/…`), answer those requests from `aiBoot.dir` instead of the copy made at build time. `aiBoot.dir` is `node_modules/ai-panel` (built in, inside the app's asar) or the installed version's folder.
+
+**Python apps (Hollow Editor)**
+1. Copy `python/aipanel_boot.py` into the app's tools, next to `ai_panel_sync.py` (outside the synced folder), and bump the synced version to `v1.2.0`.
+2. Server:
+   ```python
+   import aipanel_boot
+   AI_BOOT = aipanel_boot.Boot(builtin_dir=os.path.join(EDITOR_DIR, 'ai-panel'), update_dir=os.path.join(os.path.expanduser('~'), '.hollow-editor', 'ai-panel'))
+   sys.path.insert(0, os.path.join(AI_BOOT.dir, 'python'))
+   import aipanel
+   aipanel.configure(app_name='Hollow Editor', session_var='HOLLOW_SESSION_NAME', builtin_dir=os.path.join(AI_BOOT.dir, 'agents'), boot=AI_BOOT)
+   ```
+   and serve `/ai-panel/…` from `AI_BOOT.dir`.
+3. PyInstaller: bundle `aipanel_boot` as a normal module, but **not** `aipanel` (a bundled copy would win over a downloaded one; it is imported from `AI_BOOT.dir` at run time). Keep `ai-panel/` as data and `--collect-all winpty`; add hidden imports for the standard modules `aipanel.py` uses (`itertools`, `json`, `re`, `shutil`, `subprocess`, `threading`).
+
+**Check:** the ▾ menu ends with "AI panel v1.2.0 (built in)". When v1.2.1 is out: a dot on ▾ → Install → restart → "AI panel v1.2.1 (updated)"; then ↩ Use the built-in AI panel → restart → "v1.2.0 (built in)" again.
+
 ## Check after switching (everything the panel did before)
 
 - the 🤖 button opens and closes it, Ctrl+` too, and the ▾ menu shows the sign-in state

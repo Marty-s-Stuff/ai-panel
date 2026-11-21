@@ -7,16 +7,17 @@ Use:  import aipanel; aipanel.configure(app_name='Hollow Editor', session_var='H
       then route POST /api/term/<kind> to  aipanel.handle(kind, json_body)  -> dict to send back as JSON."""
 import itertools, json, os, re, shutil, subprocess, threading
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 HERE = os.path.dirname(os.path.abspath(__file__))
 _terms, _ids, _lock = {}, itertools.count(1), threading.Lock()
-_cfg = {'app_name': 'the app', 'session_var': None, 'builtin_dir': os.path.join(HERE, '..', 'agents'), 'extra_dirs': []}
+_cfg = {'app_name': 'the app', 'session_var': None, 'builtin_dir': os.path.join(HERE, '..', 'agents'), 'extra_dirs': [], 'boot': None}
 
 
-def configure(app_name=None, session_var=None, builtin_dir=None, extra_dirs=None):
+def configure(app_name=None, session_var=None, builtin_dir=None, extra_dirs=None, boot=None):
     """app_name fills {appName} in plugins; session_var (e.g. 'HOLLOW_SESSION_NAME') is set to "In-app <assistant>" for
-    the app's own MCP server; builtin_dir = where the shipped agents/ folder is; extra_dirs = more plugin folders."""
-    for k, v in (('app_name', app_name), ('session_var', session_var), ('builtin_dir', builtin_dir), ('extra_dirs', extra_dirs)):
+    the app's own MCP server; builtin_dir = where the shipped agents/ folder is; extra_dirs = more plugin folders;
+    boot = the app's aipanel_boot.Boot (panel updates)."""
+    for k, v in (('app_name', app_name), ('session_var', session_var), ('builtin_dir', builtin_dir), ('extra_dirs', extra_dirs), ('boot', boot)):
         if v is not None:
             _cfg[k] = v
 
@@ -241,6 +242,13 @@ def handle(kind, d):
             return {'ok': True, 'value': isinstance(d.get('path'), str) and os.path.isdir(d['path'])}
         if kind == 'start':
             return {'ok': True, 'value': start(d)}
+        if kind == 'update':   # panel updates (aipanel_boot.py, built into the app)
+            if not _cfg['boot']:
+                return {'ok': False, 'error': 'This app has no panel updater'}
+            try:
+                return {'ok': True, 'value': _cfg['boot'].update(d.get('what'), d.get('tag'))}
+            except Exception as e:   # a failed download (network, bad archive) must not take the server down
+                return {'ok': False, 'error': str(e)}
         if kind == 'read':
             return {'ok': True, **get(d.get('id')).read(int(d.get('pos') or 0))}
         if kind == 'write':

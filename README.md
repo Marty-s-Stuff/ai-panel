@@ -15,6 +15,7 @@ Written once here, so a fix or a new assistant reaches every app. **Each app nam
 | `node/aipanel.js`, `node/preload.js` | the Electron engine (main process, node-pty) and the preload block to copy |
 | `python/aipanel.py` | the Python engine (pywinpty) with a ready `/api/term/*` handler |
 | `python/sync.py` | copies a tagged version from GitHub into a Python app's folder before its build |
+| `node/boot.js`, `python/aipanel_boot.py` | the updater, built into each app: picks the built-in or an installed newer 1.x, checks GitHub, installs, goes back |
 | `agents/` | the built-in assistant plugins, the plugin guide (`README.md`) and `CHECKS.md` (what was checked in each tool's docs) |
 | `xterm/` | xterm.js 6 and its fit add-on (MIT), the terminal display |
 | `test/` | self-tests with a fake assistant (no real AI usage) |
@@ -81,3 +82,5 @@ then open http://127.0.0.1:5199/test/selftest.html: the whole panel against the 
 ## Versions
 
 Tagged `v1.0.0`, `v1.1.0`… on GitHub ([CHANGELOG.md](CHANGELOG.md)). `AI_PANEL_VERSION` in `ai-panel.js`, `VERSION` in both engines and `package.json` say which one an app has.
+
+**Updates without a rebuild (from v1.2.0):** at start the app's updater (`node/boot.js` / `python/aipanel_boot.py`, built into the app) asks GitHub for a newer 1.x, and the ▾ menu offers **Install / Not now / Skip this version**. It is used from the app's next start; **↩ Use the built-in AI panel** goes back. A new first number (2.0) still needs the apps rebuilt. The one-time change per app is in [ADOPTING.md](ADOPTING.md#panel-updates-without-a-rebuild-from-v120-a-one-time-change). So: **keep 1.x versions compatible** (same `initTerminal` options, bridge calls and engine `setup` / `configure`), or make it 2.0.

@@ -31,5 +31,6 @@ export function httpBridge({ base = '/api/term/', headers = {}, pickFolder = asy
     kill: id => { api('kill', { id }).catch(() => {}); },
     onData: cb => dataCbs.push(cb),
     onExit: cb => exitCbs.push(cb),
+    update: (what, tag) => api('update', { what, tag }).then(j => j.value),   // panel updates: 'check' | 'install' (tag) | 'builtin'
   };
 }

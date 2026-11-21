@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld('aiPanelBridge', {
   kill: id => ipcRenderer.send('term:kill', id),
   onData: cb => ipcRenderer.on('term:data', (_e, id, data) => cb(id, data)),
   onExit: cb => ipcRenderer.on('term:exit', (_e, id, code) => cb(id, code)),
+  update: (what, tag) => ipcRenderer.invoke('aipanel:update', what, tag), // panel updates: 'check' | 'install' (tag) | 'builtin'
 });

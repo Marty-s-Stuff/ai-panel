@@ -4,8 +4,13 @@ import json, mimetypes, os, sys
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# set up like an app: the updater picks this folder (built in) or a version installed from GitHub (kept in test/.updates)
 sys.path.insert(0, os.path.join(ROOT, 'python'))
+import aipanel_boot  # noqa: E402
+BOOT = aipanel_boot.Boot(builtin_dir=ROOT, update_dir=os.path.join(ROOT, 'test', '.updates'))
+sys.path.insert(0, os.path.join(BOOT.dir, 'python'))
 import aipanel  # noqa: E402
+PANEL = ('/ai-panel.', '/bridge-http.js', '/xterm/')   # the panel's page files come from the copy in use
 
 TMP = os.path.join(ROOT, 'test', '.agents')   # the fake plugin, written with this computer's path in it
 os.makedirs(TMP, exist_ok=True)
@@ -18,7 +23,7 @@ with open(os.path.join(TMP, 'fake.json'), 'w', encoding='utf-8') as f:
 with open(os.path.join(TMP, 'missing.json'), 'w', encoding='utf-8') as f:
     json.dump({'id': 'missing', 'name': 'Missing', 'find': {'commands': ['no-such-ai-program-xyz']}, 'chat': {'args': []},
                'install': {'command': 'winget install Nothing', 'shell': 'PowerShell'}}, f)
-aipanel.configure(app_name='Self-test', session_var='FAKE_APP_VAR', extra_dirs=[TMP])
+aipanel.configure(app_name='Self-test', session_var='FAKE_APP_VAR', extra_dirs=[TMP], builtin_dir=os.path.join(BOOT.dir, 'agents'), boot=BOOT)
 
 
 class H(BaseHTTPRequestHandler):
@@ -33,8 +38,10 @@ class H(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        p = os.path.normpath(os.path.join(ROOT, self.path.split('?')[0].lstrip('/')))
-        if not p.startswith(ROOT) or not os.path.isfile(p):
+        url = self.path.split('?')[0]
+        base = BOOT.dir if url.startswith(PANEL) else ROOT
+        p = os.path.normpath(os.path.join(base, url.lstrip('/')))
+        if not p.startswith(base) or not os.path.isfile(p):
             return self._send(404, b'not found', 'text/plain')
         ctype = 'text/javascript' if p.endswith('.js') else mimetypes.guess_type(p)[0] or 'application/octet-stream'
         with open(p, 'rb') as fh:
@@ -49,7 +56,7 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    print('AI panel self-test: http://127.0.0.1:5199/test/selftest.html', flush=True)
+    print(f'AI panel self-test: http://127.0.0.1:5199/test/selftest.html  (panel v{BOOT.running}{" from " + BOOT.dir if BOOT.active else ", built in"})', flush=True)
     try:
         ThreadingHTTPServer(('127.0.0.1', 5199), H).serve_forever()
     finally:

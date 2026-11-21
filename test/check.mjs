@@ -47,4 +47,29 @@ process.env.FAKE_SIGNED_OUT = '1'; const st2 = await E.status('fake'); delete pr
 ok(st2.loggedIn === false, 'status: signed out (exit code 1) reads as signed out');
 fs.rmSync(tmp, { recursive: true, force: true });
 
+console.log('Updater (node/boot.js)');
+const { createBoot } = require(path.join(ROOT, 'node', 'boot.js'));
+const VER = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version, upd = fs.mkdtempSync(path.join(process.env.TEMP || '.', 'aipanel-upd-'));
+let B = createBoot({ updateDir: upd, builtInDir: ROOT });
+ok(B.dir === ROOT && B.builtIn === VER && !B.active, 'nothing installed: the built-in copy (v' + VER + ')');
+const copy = path.join(upd, 'versions', 'v' + VER); // stand-in for a downloaded version: this folder's files
+for (const f of ['ai-panel.js', 'ai-panel.css', 'ai-panel.html', 'node', 'python', 'agents']) fs.cpSync(path.join(ROOT, f), path.join(copy, f), { recursive: true });
+fs.writeFileSync(path.join(upd, 'current.json'), JSON.stringify({ tag: 'v' + VER }));
+B = createBoot({ updateDir: upd, builtInDir: ROOT }); ok(B.dir === copy && B.active === 'v' + VER, 'an installed version is used at start');
+fs.renameSync(copy, path.join(upd, 'versions', 'v1.9.9')); fs.writeFileSync(path.join(upd, 'current.json'), JSON.stringify({ tag: 'v1.9.9' }));
+B = createBoot({ updateDir: upd, builtInDir: ROOT }); ok(B.dir === ROOT, 'a folder whose version does not match its name is ignored');
+fs.writeFileSync(path.join(upd, 'current.json'), JSON.stringify({ tag: 'v2.0.0' }));
+B = createBoot({ updateDir: upd, builtInDir: ROOT }); ok(B.dir === ROOT, 'another first number (v2.0.0) is never used');
+let refused = ''; try { await B.update('install', 'v1.1.0'); } catch (e) { refused = e.message; } ok(/not a version/.test(refused), 'versions before the updater (v1.1.0) are refused');
+await B.update('builtin'); ok(JSON.parse(fs.readFileSync(path.join(upd, 'current.json'), 'utf8')).tag === null, '"Use the built-in version" clears the choice');
+try { // a real GitHub download (needs the internet): unpack v1.1.0 and check only the panel's files come out
+  const r = await fetch('https://github.com/Marty-s-Stuff/ai-panel/archive/refs/tags/v1.1.0.tar.gz'); const gz = Buffer.from(await r.arrayBuffer());
+  const out = path.join(upd, 'untar');
+  const src = fs.readFileSync(path.join(ROOT, 'node', 'boot.js'), 'utf8'); ok(/function untar/.test(src), 'boot.js has its own unpacker');
+  const mod = { exports: {} }; new Function('module', 'exports', 'require', '__dirname', src + '\nmodule.exports.untar = untar;')(mod, mod.exports, require, path.join(ROOT, 'node'));
+  const n = mod.exports.untar(gz, out);
+  ok(n > 10 && fs.existsSync(path.join(out, 'ai-panel.js')) && fs.existsSync(path.join(out, 'xterm', 'xterm.js')) && !fs.existsSync(path.join(out, 'test')), `GitHub download unpacked: ${n} panel files, no test/ folder`);
+} catch (e) { ok(false, 'GitHub download: ' + e.message); }
+fs.rmSync(upd, { recursive: true, force: true });
+
 console.log(fails ? `\n${fails} FAILED` : '\nall passed'); process.exit(fails ? 1 : 0);
