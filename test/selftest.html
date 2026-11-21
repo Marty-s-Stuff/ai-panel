@@ -41,6 +41,26 @@
   const store = {};
   window.panel = initTerminal({ appName: 'Self-test', status: t => { document.getElementById('log').textContent += '\n' + t; }, settings: { get: (k, d) => store[k] ?? d, set: (k, v) => { store[k] = v; } },
     workFolder: () => 'C:\\Windows\\Temp', workFolderName: 'Temp', bridge: httpBridge({ pickFolder: async () => null }), below: () => document.getElementById('menubar') });
+
+  /** The answer bar against screens seen in real assistants: run  await choiceCases()  in the console. Each line must say "ok". */
+  window.choiceCases = async () => {
+    const W = '─'.repeat(70), t = window.panel._term, out = [];
+    const cases = [ // [what, screen, expected buttons ('' = none)]
+      ['message box with History open, wrapped text (Claude Code)', `Answer.\r\n\r\n── History 11/11 ${'─'.repeat(50)}\r\n❯ clouds and fog should be off in the editor by default and enabled\r\n  by options\r\n${W}\r\n  ⏵⏵ auto mode on`, ''],
+      ['message box', `Answer.\r\n\r\n${W}\r\n❯ hello there\r\n${W}\r\n  ? for shortcuts`, ''],
+      ['message box, wrapped text', `Answer.\r\n\r\n${W}\r\n❯ a long message that wraps onto the next line\r\n  and keeps going here\r\n${W}`, ''],
+      ['trust question without numbers (Claude Code)', ` Security guide\r\n\r\n ❯ No, exit\r\n   Yes, I trust this folder\r\n\r\n Enter to confirm`, 'No, exit / Yes, I trust this folder'],
+      ['Yes / No with the question at the same column (Kiro)', `┃\r\n  You are not logged in. Login now? \r\n> Yes\r\n  No`, 'Yes / No'],
+      ['numbered menu', `Allow it?\r\n❯ 1. Yes\r\n  2. No`, 'Yes / No'],
+      ['numbered list at the end of a message', `Pick one:\r\n1. Red\r\n2. Green\r\n3. Something else - type what you want`, 'Red / Green / Something else - type what you want'],
+    ];
+    for (const [what, screen, want] of cases) {
+      t.reset(); await window.panel._write(screen);
+      const c = window.panel._findChoices(), got = c ? c.options.map(o => o.text).join(' / ') : '';
+      out.push(`${got === want ? 'ok  ' : 'FAIL'} ${what}${got === want ? '' : ` — got "${got}", want "${want}"`}`);
+    }
+    t.reset(); return out.join('\n');
+  };
 </script>
 </body>
 </html>

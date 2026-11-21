@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.3 — 2026-11-21
+
+- Fixed: the answer bar made buttons out of Claude Code's own message box when you scrolled its history (↑) and the text wrapped onto a second line ("clouds and fog should be off…" / "by options"). Menus without numbers are now only read when there's no ──── border line right above or below them, including a border with words in it ("── History 11/11 ──").
+- Self-test page: `await choiceCases()` checks the answer bar against screens seen in real assistants.
+
 ## v1.2.2 — 2026-11-21
 
 - **Restart popup after an update**: "AI panel v… is installed. Restart <app> to use the latest terminal update", with **Restart now / Later** (also after "Use the built-in AI panel"). It says when a running conversation would be closed.

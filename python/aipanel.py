@@ -7,7 +7,7 @@ Use:  import aipanel; aipanel.configure(app_name='Hollow Editor', session_var='H
       then route POST /api/term/<kind> to  aipanel.handle(kind, json_body)  -> dict to send back as JSON."""
 import itertools, json, os, re, shutil, subprocess, threading
 
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 HERE = os.path.dirname(os.path.abspath(__file__))
 _terms, _ids, _lock = {}, itertools.count(1), threading.Lock()
 _cfg = {'app_name': 'the app', 'session_var': None, 'builtin_dir': os.path.join(HERE, '..', 'agents'), 'extra_dirs': [], 'boot': None, 'restart': None}

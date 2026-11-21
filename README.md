@@ -77,7 +77,7 @@ CSS tokens only, every plugin valid and documented, and the Electron engine (plu
 ```powershell
 py -3.11 test/serve.py
 ```
-then open http://127.0.0.1:5199/test/selftest.html: the whole panel against the Python engine and a fake assistant (`test/fake-agent.js`). Pick 🧪 Fake in ▾ › AI assistant; type `choices`, `menu`, `pick`, `env`, `bye`.
+then open http://127.0.0.1:5199/test/selftest.html: the whole panel against the Python engine and a fake assistant (`test/fake-agent.js`). Pick 🧪 Fake in ▾ › AI assistant; type `choices`, `menu`, `pick`, `env`, `bye`. In the browser console, `await choiceCases()` checks the answer bar against screens seen in real assistants (every line must say "ok").
 
 ## Versions
 

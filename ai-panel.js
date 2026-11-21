@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.2.2';
+export const AI_PANEL_VERSION = '1.2.3';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -113,13 +113,14 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
     }
     if (menu.length >= 2 && menu.some(o => o.current) && menu.every((o, i) => !i || nextKey(menu[i - 1].key, o.key))) return { kind: 'menu', options: menu };
     // 1b) a menu without numbers ("❯ Yes, I trust this folder" with the other choices indented to the same column): a click
-    // moves the highlight there with the arrow keys, then presses Enter. (Not the input box: that has a ──── line round it.)
-    const flat = raw.map(l => l.replace(/[│┃]/g, ' ').replace(/\s+$/, ''));
+    // moves the highlight there with the arrow keys, then presses Enter. (Not the input box: it has a ──── line right above
+    // and below it, sometimes with words in it ("── History 11/11 ───"), and a long message wraps to the same column.)
+    const flat = raw.map(l => l.replace(/[│┃]/g, ' ').replace(/\s+$/, '')), border = l => /[─━▔]{10,}/.test(l || '');
     for (let i = flat.length - 1; i >= 0; i--) {
       const m = flat[i].match(/^(\s*)([❯›>])(\s+)(\S.{0,158})$/); if (!m || /^\d{1,2}[.)]\s/.test(m[4])) continue;
-      if (/^[─━▔-]{10,}/.test(lines[i - 1] || '') || /^[─━▔-]{10,}/.test(lines[i + 1] || '')) break;
       const col = m[1].length + m[2].length + m[3].length, item = l => l.length > col && !l.slice(0, col).trim() && l[col] !== ' ';
       let a = i, z = i; while (a > 0 && item(flat[a - 1])) a--; while (z < flat.length - 1 && item(flat[z + 1])) z++;
+      if (border(lines[a - 1]) || border(lines[z + 1])) break;
       while (a < i && /[?:]$/.test(flat[a])) a++; // the question above the choices, at the same column (Kiro's "Login now?")
       if (z > a && z - a < 9) return { kind: 'move', options: flat.slice(a, z + 1).map((l, k) => ({ key: String(k + 1), text: tidy(l.slice(col)), current: a + k === i })) };
       break;
