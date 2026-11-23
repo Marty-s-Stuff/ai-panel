@@ -1,6 +1,7 @@
 // A pretend AI assistant for the self-tests (no real AI usage). Started through fake-agent.cmd, like npm-installed tools.
 //   (no args / --note <text>)  chat: a prompt; "choices" -> a numbered list; "menu" -> a ❯ menu; "pick" -> a ❯ menu without
-//                              numbers (arrows + Enter answer it); "env" -> its session name; "bye" -> exits; else echoes
+//                              numbers (arrows + Enter answer it); "env" -> its session name; "bye" -> exits; else echoes.
+//                              A message of 100+ characters takes 400 ms to take in; an Enter sent meanwhile is lost.
 //   login / logout             prints a line and exits (as a sign-in flow would)
 //   status                     plain-text status, like `codex login status`
 //   --version                  a version line
@@ -11,10 +12,13 @@ if (args[0] === 'login' || args[0] === 'logout') { out(args[0] === 'login' ? 'Fa
 else {
   const note = args[0] === '--note' ? args[1] : '';
   out(`Fake agent ready.${note ? ' Note: ' + note.slice(0, 40) : ''}\n> `);
-  let line = '', pick = -1; const PICK = ['Yes, trust it', 'No, exit', 'Ask me later'];
+  let line = '', pick = -1, takingIn = 0; const PICK = ['Yes, trust it', 'No, exit', 'Ask me later'];
   process.stdin.setRawMode?.(true);
   process.stdin.on('data', b => {
-    const s = b.toString().replace(/\x1b\[20[01]~/g, '').replace(/\x1b\[([AB])/g, (m, d) => { if (pick >= 0) pick = Math.max(0, Math.min(PICK.length - 1, pick + (d === 'B' ? 1 : -1))); return ''; });
+    let s = b.toString().replace(/\x1b\[20[01]~/g, '').replace(/\x1b\[([AB])/g, (m, d) => { if (pick >= 0) pick = Math.max(0, Math.min(PICK.length - 1, pick + (d === 'B' ? 1 : -1))); return ''; });
+    // like Claude Code: a long paste takes a moment to take in, and an Enter that arrives meanwhile is lost
+    if (Date.now() < takingIn) { s = s.replace(/[\r\n]/g, ''); if (!s) return; }
+    if (s.replace(/[^ -~]/g, '').length >= 100) { takingIn = Date.now() + 400; const held = s.replace(/[\r\n]/g, ''); setTimeout(() => { line += held; out(held); }, 400); return; }
     for (const ch of s) {
       if ((ch === '\r' || ch === '\n') && pick >= 0) { out('Picked: ' + PICK[pick] + '\n> '); pick = -1; continue; }
       if (ch === '\r' || ch === '\n') {

@@ -10,7 +10,7 @@ const os = require('os');
 const path = require('path');
 const { execFile, execFileSync } = require('child_process');
 
-const VERSION = '1.2.4';
+const VERSION = '1.2.5';
 const appData = () => process.env.APPDATA || os.homedir();
 /** Marty's own plugins, shared by every app ("Add another assistant…" opens it). */
 const sharedDir = () => path.join(appData(), 'ai-agents');

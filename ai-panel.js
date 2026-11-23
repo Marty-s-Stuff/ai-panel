@@ -3,7 +3,7 @@
 // conversation, AI assistant plugins). The process runs in the app's engine (node/aipanel.js for Electron,
 // python/aipanel.py for a Python server); `bridge` is the way to it (Electron: the preload's object; a web page:
 // bridge-http.js). Only the picked plugin's program (agents/*.json) is ever run.
-export const AI_PANEL_VERSION = '1.2.4';
+export const AI_PANEL_VERSION = '1.2.5';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -169,7 +169,27 @@ export function initTerminal({ status, settings, workFolder, bridge, appName = '
   const input = $('#termInput');
   const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(160, input.scrollHeight) + 'px'; };
   const ESC = String.fromCharCode(27);
-  const type = text => { T.write(cur, text.includes('\n') ? ESC + '[200~' + text + ESC + '[201~' : text); const id = cur; setTimeout(() => T.write(id, '\r'), 60); };
+  // Enter only once the assistant has shown the text: a long message takes it a moment to take in, and an Enter that comes
+  // sooner is lost (the message then just waits in its box). If it's still in the box a moment later, Enter once more.
+  const type = text => {
+    const id = cur, t0 = performance.now();
+    T.write(id, text.includes('\n') ? ESC + '[200~' + text + ESC + '[201~' : text);
+    const enter = () => {
+      if (cur !== id) return;
+      const now = performance.now();
+      if (!(lastOut > t0 && now - lastOut > 200) && now - t0 < 3000) return setTimeout(enter, 50); // (no echo at all: Enter after 3 s anyway)
+      T.write(id, '\r');
+      setTimeout(() => { if (cur === id && stillInBox(text)) T.write(id, '\r'); }, 1200);
+    };
+    setTimeout(enter, 60);
+  };
+  /** The message box (Claude Code: a ❯ line right under a ──── line) still holds `text`, so the Enter was lost. */
+  function stillInBox(text) {
+    if (!term) return false;
+    const b = term.buffer.active, rows = [], start = text.replace(/\s+/g, ' ').trim().slice(0, 16);
+    for (let y = b.baseY; y < b.baseY + term.rows && y < b.length; y++) rows.push(clean(b.getLine(y)?.translateToString(true) || ''));
+    return rows.some((l, i) => i > 0 && /[─━]{10,}/.test(rows[i - 1]) && /^[❯>]\s/.test(l) && (l.replace(/\s+/g, ' ').includes(start) || /\[Pasted text/.test(l)));
+  }
   function sendBox() {
     const text = input.value.replace(/\s+$/, ''); if (!text) { if (cur) T.write(cur, '\r'); return; }
     if (!cur) { status(`${A().name} is not running: press Enter in the conversation, or ▾ > Open the AI panel`); return; }

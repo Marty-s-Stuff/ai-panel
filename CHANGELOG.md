@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.5 — 2026-11-22
+
+- Fixed (found by the Simple GLB Editor's session, testing its Coach): a long message sent for you (the Send button, `send()`, `startIn()`) sat in Claude Code's box unsent. The Enter came 60 ms after the text, before Claude Code had taken in a long paste, so it was lost. The panel now presses Enter once the assistant has shown the text (at most 3 s after it), and presses it once more if the message is still in Claude Code's box a moment later.
+- The self-test's fake assistant now loses an early Enter after a long message, as Claude Code does.
+
 ## v1.2.4 — 2026-11-21
 
 - Fixed: the answer bar made buttons out of an earlier message and its answer ("❯ /model sonnet" / "⎿ Set model to Sonnet…"). A menu without numbers now only counts when the assistant's message box isn't showing below it: such menus take the box's place. Two more screens in `choiceCases()`.
